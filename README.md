@@ -1,4 +1,4 @@
-![Uploading Screenshot From 2026-11-23 15-40-52.png…]()
+<img width="967" height="536" alt="Screenshot From 2026-11-23 15-40-52" src="https://github.com/user-attachments/assets/f5d0b18d-de82-4646-ac73-946a6a529fe2" />
 
 # unimap
 
@@ -104,6 +104,7 @@ cc -O2 -Wall -o unimap unimap.c
 Algorithmic names (CJK ideographs, Tangut, etc.) are stored as compact ranges, and
 Hangul syllable names are computed at runtime, which keeps the table small.
 The currently committed table covers **Unicode 15.0**.
+<img width="967" height="536" alt="Screenshot From 2026-11-23 15-40-52" src="https://github.com/user-attachments/assets/f5d0b18d-de82-4646-ac73-946a6a529fe2" />
 
 ## Project structure
 
