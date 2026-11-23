@@ -25,6 +25,33 @@ Written in plain C using only libc (termios + ANSI escape sequences, **no ncurse
 - **Vim-style keys:** `hjkl` work alongside the arrow keys
 - **Single binary:** the character-name table is compiled in, so no runtime data files are needed
 
+## Installation
+
+### Debian, Ubuntu, Kali, Mint (apt)
+
+```sh
+curl -fsSL https://kristijanmatas.github.io/unimap/key.gpg \
+  | sudo gpg --dearmor -o /usr/share/keyrings/unimap.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/unimap.gpg] https://kristijanmatas.github.io/unimap stable main" \
+  | sudo tee /etc/apt/sources.list.d/unimap.list
+
+sudo apt update
+sudo apt install unimap
+```
+
+Updates then arrive with `sudo apt upgrade`. The package contains a static binary,
+so it works on any 64-bit (amd64) release.
+
+### Prebuilt binary
+
+Download `unimap-linux-x86_64` (static, runs on any 64-bit Linux) or the `.deb` from the
+[releases page](https://github.com/kristijanmatas/unimap/releases).
+
+### From source
+
+See [Building](#building) below.
+
 ## Requirements
 
 - A C compiler (`gcc` or `clang`) on Linux, macOS or another POSIX system
@@ -39,7 +66,7 @@ Written in plain C using only libc (termios + ANSI escape sequences, **no ncurse
 ```sh
 git clone https://github.com/kristijanmatas/unimap.git
 cd unimap
-cc -O2 -Wall -o unimap unimap.c
+make                    # or: cc -O2 -Wall -o unimap unimap.c
 ```
 
 `unames.h` (the character-name table) is picked up automatically when it sits next
@@ -52,8 +79,12 @@ cc -O2 -Wall -DNO_NAMES -o unimap unimap.c
 ### Installing (optional)
 
 ```sh
-sudo install -m 755 unimap /usr/local/bin/
+sudo make install       # installs to /usr/local (binary + man page)
+sudo make uninstall
 ```
+
+Other targets: `make static` (statically linked binary), `make deb` (Debian package
+via `dpkg-buildpackage`).
 
 ## Usage
 
@@ -147,11 +178,27 @@ The currently committed table covers **Unicode 15.0**.
 | `unimap.c` | The whole application |
 | `unames.h` | Generated Unicode character-name table (do not edit by hand) |
 | `gen_names.py` | Script that generates `unames.h` |
+| `unimap.1` | Man page |
+| `Makefile` | Build, install and packaging targets |
+| `debian/` | Debian packaging (`dpkg-buildpackage`) |
+| `packaging/` | Scripts for the static `.deb` and the apt repository |
+| `.github/workflows/release.yml` | Builds and publishes packages on each GitHub release |
+
+## Releasing
+
+Publish a GitHub release with a tag such as `v1.1`. The *Release packages* workflow
+then builds the static binary and the `.deb`, attaches them to the release and adds
+the package to the apt repository on GitHub Pages. Update `debian/changelog` first
+(`dch -v 1.1 "..."`).
 
 ## Contributing
 
 Issues and pull requests are welcome. Please keep the project dependency-free
 (libc only) and make sure it builds cleanly with `cc -O2 -Wall -Wextra`.
+
+## License
+
+[MIT](LICENSE) © 2026 Kristijan Matas
 
 ## Author
 

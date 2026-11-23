@@ -1,0 +1,23 @@
+Source: unimap
+Section: utils
+Priority: optional
+Maintainer: Kristijan Matas <kristijan.matas@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://github.com/kristijanmatas/unimap
+Vcs-Git: https://github.com/kristijanmatas/unimap.git
+Vcs-Browser: https://github.com/kristijanmatas/unimap
+Rules-Requires-Root: no
+
+Package: unimap
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: wl-clipboard | xclip | xsel
+Description: Unicode character map for the terminal
+ unimap is an interactive Unicode character map for UTF-8 terminals, in the
+ spirit of GNOME Character Map. It lists every Unicode block next to a
+ character grid, searches characters by name, collects characters into a
+ text buffer and copies them to the clipboard.
+ .
+ It is written in plain C without ncurses, supports the mouse and vim-style
+ keys, and comes with several color schemes.

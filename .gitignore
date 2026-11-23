@@ -1,2 +1,8 @@
 unimap
 *.o
+debian/.debhelper/
+debian/unimap/
+debian/files
+debian/*.substvars
+debian/*debhelper*
+debian/debhelper-build-stamp

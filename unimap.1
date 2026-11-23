@@ -1,0 +1,89 @@
+.TH UNIMAP 1 "November 2026" "unimap 1.0" "User Commands"
+.SH NAME
+unimap \- Unicode character map for the terminal
+.SH SYNOPSIS
+.B unimap
+.RB [ \-t
+.IR theme ]
+.RB [ \-l ]
+.RB [ \-h ]
+.SH DESCRIPTION
+.B unimap
+is an interactive character map for UTF\-8 terminals.
+It lists every Unicode block next to a character grid, searches characters by
+name, collects characters into a text buffer and copies them to the clipboard.
+.PP
+Copying uses the OSC 52 terminal escape sequence and, when available,
+.BR wl\-copy ,
+.BR xclip ,
+.B xsel
+or
+.BR pbcopy .
+.SH OPTIONS
+.TP
+.BR \-t ", " \-\-theme " \fItheme\fR"
+Start with the given color scheme. Overrides
+.BR UNIMAP_THEME .
+.TP
+.BR \-l ", " \-\-list\-themes
+List the available color schemes and exit.
+.TP
+.BR \-h ", " \-\-help
+Show a short help text and exit.
+.SH KEYS
+.TP
+.BR Tab ", " Shift\-Tab
+Switch between the block list and the character grid.
+.TP
+.BR "Arrow keys" ", " h ", " j ", " k ", " l
+Move.
+.TP
+.BR PgUp ", " PgDn
+Move one page.
+.TP
+.BR Home ", " End
+Start or end of the row (grid), first or last block (list).
+.TP
+.BR n ", " p ", " ] ", " [
+Next or previous block.
+.TP
+.BR Enter ", " Space
+Add the character to the text buffer.
+.TP
+.B Backspace
+Delete the last character from the text buffer.
+.TP
+.B x
+Clear the text buffer.
+.TP
+.BR c ", " y
+Copy the text buffer (or the current character if the buffer is empty) to the
+clipboard.
+.TP
+.B g
+Go to a code point (hexadecimal).
+.TP
+.B /
+Search by character name, block name, a single character or
+.BR U+XXXX .
+Tab in the prompt switches between all blocks and the current block.
+.TP
+.BR t ", " T
+Next or previous color scheme.
+.TP
+.BR q ", " Ctrl\-C
+Quit.
+.SH ENVIRONMENT
+.TP
+.B UNIMAP_THEME
+Default color scheme. Available schemes: default, dark, light,
+solarized\-dark, solarized\-light, gruvbox, nord, dracula.
+.SH NOTES
+A UTF\-8 locale and a font containing the wanted glyphs are required.
+Color schemes other than
+.B default
+use 24\-bit color escape sequences.
+.SH AUTHOR
+Kristijan Matas
+.SH SEE ALSO
+https://github.com/kristijanmatas/unimap
