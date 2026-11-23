@@ -1,0 +1,30 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Architectures: amd64
+Codename: stable
+Components: main
+Date: Mon, 23 Nov 2026 18:24:57 +0000
+Description: unimap apt repository
+Label: unimap
+Origin: unimap
+Suite: stable
+MD5Sum:
+ a36a9e07ecfce89e9d00de51d6e616ef             1054 main/binary-amd64/Packages
+ a5cec51b56082d318445aa6b45856a55              685 main/binary-amd64/Packages.gz
+SHA1:
+ af69df90a3dcd1d892f1674dbbdc49cf9e3d7a6f             1054 main/binary-amd64/Packages
+ 316b04ffa346d96e453389cd8018e4f2a10fcf5f              685 main/binary-amd64/Packages.gz
+SHA256:
+ e162d314c9e6398a78482ab70ac7c2af687b538b7c8d877e14f6149f66a0dc8c             1054 main/binary-amd64/Packages
+ 9897e2ac53b8d2070caa4642de014a20c882854dcbacd8a52730312b0de82086              685 main/binary-amd64/Packages.gz
+SHA512:
+ b435ed2ebd9c5fb1823f8f0f52bab7f3cf4d225486cee57d9b46782e943d636ab67ba55f99b97b8a6275a9896f19ce596249294f9ab3547612dc62f6b62db69d             1054 main/binary-amd64/Packages
+ 88b7225f3e11fe9431644b34843866a7382d7c012d4c2fa99d2a3ab85d8e7f94614cdb73febbcb6dd0746d6ce5e6e0c2fdc15197b8f4a5e09eb040de5c7f8b8c              685 main/binary-amd64/Packages.gz
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQTh4DZVlXtMAtqf5igP1cSui60jcwUCawSE+QAKCRAP1cSui60j
+c59EAQCGi0TMmQ8b52wiV7whYuc1fjfWy/SAnr7GLbfrK5BX+QEAg3fnL38LnWvZ
+x2rToLld2H/tnE4Y3O9HnnR/ygLkUws=
+=i8AK
+-----END PGP SIGNATURE-----

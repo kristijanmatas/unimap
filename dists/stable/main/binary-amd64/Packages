@@ -1,0 +1,24 @@
+Package: unimap
+Architecture: amd64
+Version: 1.0
+Priority: optional
+Section: utils
+Maintainer: Kristijan Matas <kristijan.matas@gmail.com>
+Installed-Size: 1716
+Suggests: wl-clipboard | xclip | xsel
+Filename: pool/main/u/unimap/unimap_1.0_amd64.deb
+Size: 384472
+MD5sum: c03b7a8eb73141f0fafdeb6eaacf9013
+SHA1: 4370db13d27d5e7d7eddf22af9aabb360e935b6e
+SHA256: b8720f3496fecb1a7bdd5d69c4d6abbe407b4eb016cb1f1a62b5b6cedff38228
+SHA512: 431cc2bc2797ea24c82d1f278f5b9d6505018d5acb902cdb3870238329c592e36f2e9623178a4118ba327f42d00ad3d46db18382701da6655bad9b2eebe64e1f
+Homepage: https://github.com/kristijanmatas/unimap
+Description: Unicode character map for the terminal
+ unimap is an interactive Unicode character map for UTF-8 terminals, in the
+ spirit of GNOME Character Map. It lists every Unicode block next to a
+ character grid, searches characters by name, collects characters into a
+ text buffer and copies them to the clipboard.
+ .
+ It is written in plain C without ncurses, supports the mouse and vim-style
+ keys, and comes with several color schemes.
+
