@@ -27,6 +27,7 @@
  *                      (all blocks / current block).  In the results list:
  *                      Up/Down, Enter = go, Space = add to text, Esc = close
  *   mouse              click to select, double-click to add, wheel to scroll
+ *   t / T              next / previous color scheme (also -t NAME, $UNIMAP_THEME)
  *   q / Ctrl-C         quit
  */
 #define _XOPEN_SOURCE 700
@@ -222,6 +223,107 @@ static char rquery[64];
 static int lw, gx0, gx, cw;
 
 /* ------------------------------------------------------------------ */
+/* Color schemes                                                       */
+/* ------------------------------------------------------------------ */
+/* Each field is an SGR escape sequence. `base` (default fg/bg for the
+ * whole screen) is re-applied after every reset, the other styles are
+ * applied on top of it.  Colored themes use 24-bit (truecolor) escapes. */
+typedef struct {
+    const char *name;
+    const char *base;    /* screen foreground / background             */
+    const char *bar;     /* title bar and help bar                     */
+    const char *head;    /* headers and prompt labels                  */
+    const char *dim;     /* separators, row labels, missing glyphs     */
+    const char *sel;     /* selection in the focused pane              */
+    const char *sel2;    /* selection in the unfocused pane            */
+    const char *accent;  /* code point and name in the info line       */
+    const char *msg;     /* status messages                            */
+} Theme;
+
+#define RGB(r, g, b) #r ";" #g ";" #b
+#define FG(c) "38;2;" c
+#define BG(c) "48;2;" c
+#define SGR(s) "\x1b[" s "m"
+
+static const Theme themes[] = {
+    { "default", "", SGR("7"), SGR("1"), SGR("2"), SGR("7"), SGR("1;4"),
+      SGR("1"), SGR("33") },
+    { "dark",
+      SGR(FG(RGB(208,208,208)) ";" BG(RGB(28,28,28))),
+      SGR("1;" FG(RGB(255,255,255)) ";" BG(RGB(58,58,58))),
+      SGR("1;" FG(RGB(135,215,255))),
+      SGR(FG(RGB(108,108,108))),
+      SGR(FG(RGB(28,28,28)) ";" BG(RGB(95,175,255))),
+      SGR("1;4;" FG(RGB(95,175,255))),
+      SGR("1;" FG(RGB(95,175,255))),
+      SGR(FG(RGB(255,215,95))) },
+    { "light",
+      SGR(FG(RGB(48,48,48)) ";" BG(RGB(250,250,250))),
+      SGR("1;" FG(RGB(32,32,32)) ";" BG(RGB(218,218,218))),
+      SGR("1;" FG(RGB(0,95,135))),
+      SGR(FG(RGB(160,160,160))),
+      SGR(FG(RGB(255,255,255)) ";" BG(RGB(0,95,215))),
+      SGR("1;4;" FG(RGB(0,95,215))),
+      SGR("1;" FG(RGB(0,95,215))),
+      SGR(FG(RGB(175,95,0))) },
+    { "solarized-dark",
+      SGR(FG(RGB(131,148,150)) ";" BG(RGB(0,43,54))),
+      SGR("1;" FG(RGB(147,161,161)) ";" BG(RGB(7,54,66))),
+      SGR("1;" FG(RGB(42,161,152))),
+      SGR(FG(RGB(88,110,117))),
+      SGR(FG(RGB(253,246,227)) ";" BG(RGB(38,139,210))),
+      SGR("1;4;" FG(RGB(38,139,210))),
+      SGR("1;" FG(RGB(38,139,210))),
+      SGR(FG(RGB(181,137,0))) },
+    { "solarized-light",
+      SGR(FG(RGB(101,123,131)) ";" BG(RGB(253,246,227))),
+      SGR("1;" FG(RGB(88,110,117)) ";" BG(RGB(238,232,213))),
+      SGR("1;" FG(RGB(42,161,152))),
+      SGR(FG(RGB(147,161,161))),
+      SGR(FG(RGB(253,246,227)) ";" BG(RGB(38,139,210))),
+      SGR("1;4;" FG(RGB(38,139,210))),
+      SGR("1;" FG(RGB(38,139,210))),
+      SGR(FG(RGB(203,75,22))) },
+    { "gruvbox",
+      SGR(FG(RGB(235,219,178)) ";" BG(RGB(40,40,40))),
+      SGR("1;" FG(RGB(235,219,178)) ";" BG(RGB(60,56,54))),
+      SGR("1;" FG(RGB(250,189,47))),
+      SGR(FG(RGB(146,131,116))),
+      SGR(FG(RGB(40,40,40)) ";" BG(RGB(254,128,25))),
+      SGR("1;4;" FG(RGB(254,128,25))),
+      SGR("1;" FG(RGB(131,165,152))),
+      SGR(FG(RGB(184,187,38))) },
+    { "nord",
+      SGR(FG(RGB(216,222,233)) ";" BG(RGB(46,52,64))),
+      SGR("1;" FG(RGB(236,239,244)) ";" BG(RGB(59,66,82))),
+      SGR("1;" FG(RGB(136,192,208))),
+      SGR(FG(RGB(97,110,136))),
+      SGR(FG(RGB(46,52,64)) ";" BG(RGB(136,192,208))),
+      SGR("1;4;" FG(RGB(136,192,208))),
+      SGR("1;" FG(RGB(129,161,193))),
+      SGR(FG(RGB(235,203,139))) },
+    { "dracula",
+      SGR(FG(RGB(248,248,242)) ";" BG(RGB(40,42,54))),
+      SGR("1;" FG(RGB(248,248,242)) ";" BG(RGB(68,71,90))),
+      SGR("1;" FG(RGB(189,147,249))),
+      SGR(FG(RGB(98,114,164))),
+      SGR(FG(RGB(40,42,54)) ";" BG(RGB(255,121,198))),
+      SGR("1;4;" FG(RGB(255,121,198))),
+      SGR("1;" FG(RGB(139,233,253))),
+      SGR(FG(RGB(241,250,140))) },
+};
+#define NTHEMES ((int)(sizeof themes / sizeof themes[0]))
+static int theme = 0;
+#define TH (&themes[theme])
+
+static int find_theme(const char *name)
+{
+    for (int i = 0; i < NTHEMES; i++)
+        if (!strcmp(themes[i].name, name)) return i;
+    return -1;
+}
+
+/* ------------------------------------------------------------------ */
 /* Output buffer                                                       */
 /* ------------------------------------------------------------------ */
 static char *ob;
@@ -238,6 +340,9 @@ static void oadd(const char *s, size_t n)
     olen += n;
 }
 static void oputs(const char *s) { oadd(s, strlen(s)); }
+/* Switch to a theme style: reset, theme base colors, then the style. */
+static void sty(const char *s) { oputs("\x1b[0m"); oputs(TH->base); oputs(s); }
+#define RST() sty("")
 static void ofmt(const char *fmt, ...)
 {
     char tmp[1024];
@@ -905,6 +1010,11 @@ static void handle_key(int k)
     case 127: case 8: case KEY_DEL: if (nbuf) nbuf--; return;
     case 'x': nbuf = 0; return;
     case 'c': case 'y': do_copy(); return;
+    case 't': case 'T':
+        theme = (theme + (k == 't' ? 1 : NTHEMES - 1)) % NTHEMES;
+        setmsg("Theme: %s  (start with -t %s or UNIMAP_THEME=%s to keep it)",
+               TH->name, TH->name, TH->name);
+        return;
     case 'g': mode = 1; ninp = 0; inp[0] = 0; return;
     case '/': mode = 2; scope_blk = 0; ninp = 0; inp[0] = 0; return;
     case KEY_MOUSE: handle_mouse(); return;
@@ -924,41 +1034,54 @@ static void draw(void)
     layout();
     fix_view();
     olen = 0;
-    oputs("\x1b[0m\x1b[?25l\x1b[H\x1b[2J");
+    oputs("\x1b[?25l");
+    RST();
+    oputs("\x1b[H\x1b[2J");
 
     /* title bar */
-    snprintf(tmp, sizeof tmp, " unimap  -  Unicode character map   (names: %s%s)",
-             HAVE_NAMES ? "Unicode " : "", UNAMES_UNICODE);
-    ofmt("\x1b[1;1H\x1b[7m%-*.*s\x1b[0m", W, W, tmp);
+    snprintf(tmp, sizeof tmp, " unimap  -  Unicode character map   (names: %s%s)   theme: %s",
+             HAVE_NAMES ? "Unicode " : "", UNAMES_UNICODE, TH->name);
+    oputs("\x1b[1;1H");
+    sty(TH->bar);
+    ofmt("%-*.*s", W, W, tmp);
+    RST();
 
     /* block list */
     snprintf(tmp, sizeof tmp, " Blocks %d/%d", blk + 1, NBLOCKS);
-    ofmt("\x1b[2;1H\x1b[1m%-*.*s\x1b[0m", lw, lw, tmp);
+    oputs("\x1b[2;1H");
+    sty(TH->head);
+    ofmt("%-*.*s", lw, lw, tmp);
+    RST();
     for (i = 0; i < nr; i++) {
         int idx = btop + i, y = 3 + i;
         ofmt("\x1b[%d;1H", y);
         if (idx < NBLOCKS) {
-            if (idx == blk) oputs(focus == 0 ? "\x1b[7m" : "\x1b[1;4m");
+            if (idx == blk) sty(focus == 0 ? TH->sel : TH->sel2);
             ofmt(" %-*.*s", lw - 1, lw - 1, blocks[idx].name);
-            oputs("\x1b[0m");
+            RST();
         } else {
             ofmt("%*s", lw, "");
         }
     }
+    sty(TH->dim);
     for (i = 0; i <= nr; i++)
-        ofmt("\x1b[%d;%dH\x1b[2m\xE2\x94\x82\x1b[0m", 2 + i, lw + 1);
+        ofmt("\x1b[%d;%dH\xE2\x94\x82", 2 + i, lw + 1);
+    RST();
 
     if (mode == 3) {
         /* search results */
         int rw = W - gx0 + 1;
         snprintf(tmp, sizeof tmp, " %d result%s for \"%s\"%s", nres, nres == 1 ? "" : "s",
                  rquery, scope_blk ? "  (this block)" : "");
-        ofmt("\x1b[2;%dH\x1b[1m%-*.*s\x1b[0m", gx0, rw, rw, tmp);
+        ofmt("\x1b[2;%dH", gx0);
+        sty(TH->head);
+        ofmt("%-*.*s", rw, rw, tmp);
+        RST();
         for (i = 0; i < nr; i++) {
             int idx = rtop + i, y = 3 + i;
             if (idx >= nres) break;
             ofmt("\x1b[%d;%dH", y, gx0);
-            if (idx == rsel) oputs("\x1b[7m");
+            if (idx == rsel) sty(TH->sel);
             ofmt("%*s", rw, "");
             if (res[idx].is_block) {
                 const Block *rb = &blocks[res[idx].v];
@@ -972,13 +1095,13 @@ static void draw(void)
                 ofmt("\x1b[%d;%dH%s%s", y, gx0 + 10, w == 0 ? "\xE2\x97\x8C" : "", t ? g : "\xC2\xB7");
                 ofmt("\x1b[%d;%dH%.*s", y, gx0 + 14, rw - 14 > 0 ? rw - 14 : 1, nm ? nm : "");
             }
-            oputs("\x1b[0m");
+            RST();
         }
     } else {
     /* column header */
-    oputs("\x1b[1m");
+    sty(TH->head);
     for (i = 0; i < 16; i++) ofmt("\x1b[2;%dH%X", gx + i * cw + 1, i);
-    oputs("\x1b[0m");
+    RST();
 
     /* grid */
     for (i = 0; i < nr; i++) {
@@ -986,21 +1109,24 @@ static void draw(void)
         int y = 3 + i;
         if (rs > b->hi) break;
         snprintf(tmp, sizeof tmp, "U+%03Xx", rs >> 4);
-        ofmt("\x1b[%d;%dH\x1b[2m%-7s\x1b[0m", y, gx0, tmp);
+        ofmt("\x1b[%d;%dH", y, gx0);
+        sty(TH->dim);
+        ofmt("%-7s", tmp);
+        RST();
         for (int col = 0; col < 16; col++) {
             uint32_t c = rs + (uint32_t)col;
             if (c > b->hi) break;
             int t = glyph(c, g, &w);
             int sel = (c == cp);
             ofmt("\x1b[%d;%dH", y, gx + col * cw);
-            if (sel) oputs(focus == 1 ? "\x1b[7m" : "\x1b[1;4m");
-            else if (t != 1) oputs("\x1b[2m");
+            if (sel) sty(focus == 1 ? TH->sel : TH->sel2);
+            else if (t != 1) sty(TH->dim);
             oputs(" ");
             int vis = w;
             if (w == 0) { oputs("\xE2\x97\x8C"); vis = 1; }   /* dotted circle */
             oputs(g);
             ofmt("%*s", cw - 1 - vis, "");
-            oputs("\x1b[0m");
+            if (sel || t != 1) RST();
         }
     }
 
@@ -1017,19 +1143,29 @@ static void draw(void)
             snprintf(one, sizeof one, "%02X ", (unsigned char)u8[i]);
             strcat(bytes, one);
         }
-        ofmt("\x1b[%d;1H\x1b[K\x1b[1m U+%04X\x1b[0m  %s%s   \x1b[1m%s\x1b[0m",
-             H - 4, cp, w == 0 ? "\xE2\x97\x8C" : "", t == 1 ? g : "-",
-             nm ? nm : HAVE_NAMES ? "(unassigned)" : "(names not built in)");
+        ofmt("\x1b[%d;1H\x1b[K", H - 4);
+        sty(TH->accent);
+        ofmt(" U+%04X", cp);
+        RST();
+        ofmt("  %s%s   ", w == 0 ? "\xE2\x97\x8C" : "", t == 1 ? g : "-");
+        sty(TH->accent);
+        oputs(nm ? nm : HAVE_NAMES ? "(unassigned)" : "(names not built in)");
+        RST();
         ofmt("\x1b[%d;1H\x1b[K dec %u   UTF-8: %s  Block: %s   [%s]",
              H - 3, cp, bytes, b->name, classify(cp));
     }
 
     /* text buffer / prompt */
     ofmt("\x1b[%d;1H\x1b[K", H - 2);
+    sty(TH->head);
     if (mode == 1) {
-        ofmt("\x1b[1m Go to U+\x1b[0m%s_", inp);
+        oputs(" Go to U+");
+        RST();
+        ofmt("%s_", inp);
     } else if (mode == 2) {
-        ofmt("\x1b[1m Search (%s): \x1b[0m%s_", scope_blk ? "this block" : "all", inp);
+        ofmt(" Search (%s): ", scope_blk ? "this block" : "all");
+        RST();
+        ofmt("%s_", inp);
     } else {
         char out[MAXBUF * 4 + 8];
         int maxc = W - 10;
@@ -1037,25 +1173,35 @@ static void draw(void)
         size_t n = 0;
         for (i = start; i < nbuf; i++) n += (size_t)u8enc(buf[i], out + n);
         out[n] = 0;
-        ofmt("\x1b[1m Text:\x1b[0m %s\x1b[2m|\x1b[0m", out);
+        oputs(" Text:");
+        RST();
+        ofmt(" %s", out);
+        sty(TH->dim);
+        oputs("|");
+        RST();
     }
 
     /* message + help */
-    ofmt("\x1b[%d;1H\x1b[K\x1b[33m %s\x1b[0m", H - 1, msg);
+    ofmt("\x1b[%d;1H\x1b[K", H - 1);
+    sty(TH->msg);
+    ofmt(" %s", msg);
+    RST();
+    ofmt("\x1b[%d;1H", H);
+    sty(TH->bar);
     if (mode == 1)
-        ofmt("\x1b[%d;1H\x1b[7m%-*.*s\x1b[0m", H, W, W,
-             " Hex code point   Enter = go   Esc = cancel");
+        ofmt("%-*.*s", W, W, " Hex code point   Enter = go   Esc = cancel");
     else if (mode == 2)
-        ofmt("\x1b[%d;1H\x1b[7m%-*.*s\x1b[0m", H, W, W,
+        ofmt("%-*.*s", W, W,
              " Name words, one char, or U+XXXX   Tab = scope (all / this block)"
              "   Enter = search   Esc = cancel");
     else if (mode == 3)
-        ofmt("\x1b[%d;1H\x1b[7m%-*.*s\x1b[0m", H, W, W,
+        ofmt("%-*.*s", W, W,
              " Up/Down select   Enter go   Space add to text   / new search   Esc close");
     else
-        ofmt("\x1b[%d;1H\x1b[7m%-*.*s\x1b[0m", H, W, W,
+        ofmt("%-*.*s", W, W,
              " Tab pane  arrows/hjkl move  Enter add  c copy  Bksp del  x clear"
-             "  g goto  / search  n/p block  q quit");
+             "  g goto  / search  n/p block  t theme  q quit");
+    RST();
 
     wr(ob, olen);
 }
@@ -1063,8 +1209,57 @@ static void draw(void)
 /* ------------------------------------------------------------------ */
 /* main                                                                */
 /* ------------------------------------------------------------------ */
-int main(void)
+static void usage(FILE *f)
 {
+    fputs("usage: unimap [-t THEME] [-l] [-h]\n"
+          "  -t, --theme THEME   color scheme (default from $UNIMAP_THEME, else \"default\")\n"
+          "  -l, --list-themes   list available color schemes\n"
+          "  -h, --help          show this help\n"
+          "Press t / T inside unimap to cycle through the color schemes.\n", f);
+}
+
+static void list_themes(void)
+{
+    for (int i = 0; i < NTHEMES; i++) puts(themes[i].name);
+}
+
+static int set_theme(const char *name)
+{
+    int i = find_theme(name);
+    if (i < 0) {
+        fprintf(stderr, "unimap: unknown theme \"%s\". Available themes:\n", name);
+        for (i = 0; i < NTHEMES; i++) fprintf(stderr, "  %s\n", themes[i].name);
+        return 0;
+    }
+    theme = i;
+    return 1;
+}
+
+int main(int argc, char **argv)
+{
+    const char *env = getenv("UNIMAP_THEME");
+    if (env && *env && !set_theme(env)) return 2;
+
+    for (int i = 1; i < argc; i++) {
+        const char *a = argv[i];
+        if (!strcmp(a, "-h") || !strcmp(a, "--help")) {
+            usage(stdout);
+            return 0;
+        } else if (!strcmp(a, "-l") || !strcmp(a, "--list-themes")) {
+            list_themes();
+            return 0;
+        } else if (!strcmp(a, "-t") || !strcmp(a, "--theme")) {
+            if (++i >= argc) { usage(stderr); return 2; }
+            if (!set_theme(argv[i])) return 2;
+        } else if (!strncmp(a, "--theme=", 8)) {
+            if (!set_theme(a + 8)) return 2;
+        } else {
+            fprintf(stderr, "unimap: unknown option \"%s\"\n", a);
+            usage(stderr);
+            return 2;
+        }
+    }
+
     if (!isatty(0) || !isatty(1)) {
         fputs("umap: must be run in a terminal\n", stderr);
         return 1;

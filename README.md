@@ -19,6 +19,8 @@ Written in plain C using only libc (termios + ANSI escape sequences, **no ncurse
 - **Text buffer:** collect several characters and copy them all at once
 - **Clipboard:** OSC 52 (works in most modern terminals, even over SSH), plus
   `wl-copy`, `xclip`, `xsel` or `pbcopy` when available
+- **Color schemes:** 8 built-in themes (`default`, `dark`, `light`, `solarized-dark`,
+  `solarized-light`, `gruvbox`, `nord`, `dracula`), switchable live with `t` / `T`
 - **Mouse support:** click to select, double-click to add, scroll with the wheel
 - **Vim-style keys:** `hjkl` work alongside the arrow keys
 - **Single binary:** the character-name table is compiled in, so no runtime data files are needed
@@ -56,7 +58,10 @@ sudo install -m 755 unimap /usr/local/bin/
 ## Usage
 
 ```sh
-./unimap
+./unimap                     # start with the default look
+./unimap -t gruvbox          # start with a color scheme
+./unimap -l                  # list color schemes
+./unimap -h                  # help
 ```
 
 ### Key bindings
@@ -71,10 +76,10 @@ sudo install -m 755 unimap /usr/local/bin/
 | `Enter` / `Space` | Add character to the text buffer (`Enter` in the block list jumps to the grid) |
 | `Backspace` | Delete last character from the buffer |
 | `x` | Clear the text buffer |
-| `c` | Copy the buffer to the clipboard |
-| `y` | Copy the current character to the clipboard |
+| `c` / `y` | Copy the buffer to the clipboard (or the current character if the buffer is empty) |
 | `g` | Go to a code point (hex) |
 | `/` | Search (see below) |
+| `t` / `T` | Next / previous color scheme |
 | Mouse | Click to select, double-click to add, wheel to scroll |
 | `q` / `Ctrl-C` | Quit |
 
@@ -90,6 +95,36 @@ Press `/` and type:
 `Tab` inside the prompt toggles the scope between *all blocks* and *current block*.
 In the results list: `Up`/`Down` to move, `Enter` to go to the character, `Space` to
 add it to the text buffer, `Esc` to close.
+
+### Color schemes
+
+| Theme | Description |
+|-------|-------------|
+| `default` | Uses your terminal's own colors (bold / reverse / dim only) |
+| `dark` | Neutral dark gray with blue accents |
+| `light` | Light background with blue accents |
+| `solarized-dark` | Solarized, dark variant |
+| `solarized-light` | Solarized, light variant |
+| `gruvbox` | Gruvbox dark, warm retro colors |
+| `nord` | Nord, cool arctic blues |
+| `dracula` | Dracula, dark with pink and purple |
+
+Choose one with `-t NAME` (or `--theme NAME`), or set it permanently in your shell
+config:
+
+```sh
+export UNIMAP_THEME=nord
+```
+
+The `-t` option overrides `UNIMAP_THEME`. Inside the app, `t` / `T` cycles through
+the schemes; the current one is shown in the title bar.
+
+All schemes except `default` use 24-bit (truecolor) escape sequences, which nearly every
+modern terminal supports (GNOME Terminal, Konsole, kitty, Alacritty, WezTerm, iTerm2,
+Windows Terminal, tmux with `Tc` enabled). On a terminal without truecolor support,
+use `default`.
+
+New schemes are easy to add: append an entry to the `themes[]` table in `unimap.c`.
 
 ## Regenerating the name table
 
