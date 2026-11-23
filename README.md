@@ -1,3 +1,5 @@
+![Uploading Screenshot From 2026-11-23 15-40-52.png…]()
+
 # unimap
 
 A fast, dependency-free **Unicode character map for the terminal**, in the spirit of
